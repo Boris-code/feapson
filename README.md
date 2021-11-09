@@ -26,3 +26,9 @@ Example:
 >>> feapson.loads('{"a": true, "b": false, "c": [1, 2, 3]}')
 {'a': True, 'b': False, 'c': [1, 2, 3]}
 ```
+
+Install:
+
+```shell
+pip install feapson 
+```
