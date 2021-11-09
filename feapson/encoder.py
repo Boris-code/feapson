@@ -17,38 +17,38 @@ except ImportError:
 
 ESCAPE = re.compile(r'[\x00-\x1f\\"\b\f\n\r\t]')
 ESCAPE_ASCII = re.compile(r'([\\"]|[^\ -~])')
-HAS_UTF8 = re.compile(b'[\x80-\xff]')
+HAS_UTF8 = re.compile(b"[\x80-\xff]")
 ESCAPE_DCT = {
-    '\\': '\\\\',
+    "\\": "\\\\",
     '"': '\\"',
-    '\b': '\\b',
-    '\f': '\\f',
-    '\n': '\\n',
-    '\r': '\\r',
-    '\t': '\\t',
+    "\b": "\\b",
+    "\f": "\\f",
+    "\n": "\\n",
+    "\r": "\\r",
+    "\t": "\\t",
 }
 for i in range(0x20):
-    ESCAPE_DCT.setdefault(chr(i), '\\u{0:04x}'.format(i))
-    #ESCAPE_DCT.setdefault(chr(i), '\\u%04x' % (i,))
+    ESCAPE_DCT.setdefault(chr(i), "\\u{0:04x}".format(i))
+    # ESCAPE_DCT.setdefault(chr(i), '\\u%04x' % (i,))
 
-INFINITY = float('inf')
+INFINITY = float("inf")
+
 
 def py_encode_basestring(s):
-    """Return a Dict representation of a Python string
+    """Return a Dict representation of a Python string"""
 
-    """
     def replace(match):
         return ESCAPE_DCT[match.group(0)]
+
     return '"' + ESCAPE.sub(replace, s) + '"'
 
 
-encode_basestring = (c_encode_basestring or py_encode_basestring)
+encode_basestring = c_encode_basestring or py_encode_basestring
 
 
 def py_encode_basestring_ascii(s):
-    """Return an ASCII-only Dict representation of a Python string
+    """Return an ASCII-only Dict representation of a Python string"""
 
-    """
     def replace(match):
         s = match.group(0)
         try:
@@ -56,19 +56,20 @@ def py_encode_basestring_ascii(s):
         except KeyError:
             n = ord(s)
             if n < 0x10000:
-                return '\\u{0:04x}'.format(n)
-                #return '\\u%04x' % (n,)
+                return "\\u{0:04x}".format(n)
+                # return '\\u%04x' % (n,)
             else:
                 # surrogate pair
                 n -= 0x10000
-                s1 = 0xd800 | ((n >> 10) & 0x3ff)
-                s2 = 0xdc00 | (n & 0x3ff)
-                return '\\u{0:04x}\\u{1:04x}'.format(s1, s2)
+                s1 = 0xD800 | ((n >> 10) & 0x3FF)
+                s2 = 0xDC00 | (n & 0x3FF)
+                return "\\u{0:04x}\\u{1:04x}".format(s1, s2)
+
     return '"' + ESCAPE_ASCII.sub(replace, s) + '"'
 
 
-encode_basestring_ascii = (
-    c_encode_basestring_ascii or py_encode_basestring_ascii)
+encode_basestring_ascii = c_encode_basestring_ascii or py_encode_basestring_ascii
+
 
 class DictEncoder(object):
     """Extensible Dict <http://feapson.org> encoder for Python data structures.
@@ -99,11 +100,22 @@ class DictEncoder(object):
     implementation (to raise ``TypeError``).
 
     """
-    item_separator = ', '
-    key_separator = ': '
-    def __init__(self, *, skipkeys=False, ensure_ascii=True,
-            check_circular=True, allow_nan=True, sort_keys=False,
-            indent=None, separators=None, default=None):
+
+    item_separator = ", "
+    key_separator = ": "
+
+    def __init__(
+        self,
+        *,
+        skipkeys=False,
+        ensure_ascii=True,
+        check_circular=True,
+        allow_nan=True,
+        sort_keys=False,
+        indent=None,
+        separators=None,
+        default=None,
+    ):
         """Constructor for DictEncoder, with sensible defaults.
 
         If skipkeys is false, then it is a TypeError to attempt
@@ -153,7 +165,7 @@ class DictEncoder(object):
         if separators is not None:
             self.item_separator, self.key_separator = separators
         elif indent is not None:
-            self.item_separator = ','
+            self.item_separator = ","
         if default is not None:
             self.default = default
 
@@ -176,8 +188,9 @@ class DictEncoder(object):
                 return DictEncoder.default(self, o)
 
         """
-        raise TypeError(f'Object of type {o.__class__.__name__} '
-                        f'is not Dict serializable')
+        raise TypeError(
+            f"Object of type {o.__class__.__name__} " f"is not Dict serializable"
+        )
 
     def encode(self, o):
         """Return a Dict string representation of a Python data structure.
@@ -199,7 +212,7 @@ class DictEncoder(object):
         chunks = self.iterencode(o, _one_shot=True)
         if not isinstance(chunks, (list, tuple)):
             chunks = list(chunks)
-        return ''.join(chunks)
+        return "".join(chunks)
 
     def iterencode(self, o, _one_shot=False):
         """Encode the given object and yield each string
@@ -220,73 +233,88 @@ class DictEncoder(object):
         else:
             _encoder = encode_basestring
 
-        def floatstr(o, allow_nan=self.allow_nan,
-                _repr=float.__repr__, _inf=INFINITY, _neginf=-INFINITY):
+        def floatstr(
+            o,
+            allow_nan=self.allow_nan,
+            _repr=float.__repr__,
+            _inf=INFINITY,
+            _neginf=-INFINITY,
+        ):
             # Check for specials.  Note that this type of test is processor
             # and/or platform-specific, so do tests which don't depend on the
             # internals.
 
             if o != o:
-                text = 'NaN'
+                text = "NaN"
             elif o == _inf:
-                text = 'Infinity'
+                text = "Infinity"
             elif o == _neginf:
-                text = '-Infinity'
+                text = "-Infinity"
             else:
                 return _repr(o)
 
             if not allow_nan:
                 raise ValueError(
-                    "Out of range float values are not Dict compliant: " +
-                    repr(o))
+                    "Out of range float values are not Dict compliant: " + repr(o)
+                )
 
             return text
 
-
-        if (_one_shot and c_make_encoder is not None
-                and self.indent is None):
-            _iterencode = c_make_encoder(
-                markers, self.default, _encoder, self.indent,
-                self.key_separator, self.item_separator, self.sort_keys,
-                self.skipkeys, self.allow_nan)
-        else:
-            _iterencode = _make_iterencode(
-                markers, self.default, _encoder, self.indent, floatstr,
-                self.key_separator, self.item_separator, self.sort_keys,
-                self.skipkeys, _one_shot)
+        _iterencode = _make_iterencode(
+            markers,
+            self.default,
+            _encoder,
+            self.indent,
+            floatstr,
+            self.key_separator,
+            self.item_separator,
+            self.sort_keys,
+            self.skipkeys,
+            _one_shot,
+        )
         return _iterencode(o, 0)
 
-def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
-        _key_separator, _item_separator, _sort_keys, _skipkeys, _one_shot,
-        ## HACK: hand-optimized bytecode; turn globals into locals
-        ValueError=ValueError,
-        dict=dict,
-        float=float,
-        id=id,
-        int=int,
-        isinstance=isinstance,
-        list=list,
-        str=str,
-        tuple=tuple,
-        _intstr=int.__repr__,
-    ):
+
+def _make_iterencode(
+    markers,
+    _default,
+    _encoder,
+    _indent,
+    _floatstr,
+    _key_separator,
+    _item_separator,
+    _sort_keys,
+    _skipkeys,
+    _one_shot,
+    ## HACK: hand-optimized bytecode; turn globals into locals
+    ValueError=ValueError,
+    dict=dict,
+    float=float,
+    id=id,
+    int=int,
+    isinstance=isinstance,
+    list=list,
+    str=str,
+    tuple=tuple,
+    _intstr=int.__repr__,
+):
 
     if _indent is not None and not isinstance(_indent, str):
-        _indent = ' ' * _indent
+        _indent = " " * _indent
 
     def _iterencode_list(lst, _current_indent_level):
         if not lst:
-            yield '[]'
+            yield "[]"
             return
         if markers is not None:
             markerid = id(lst)
             if markerid in markers:
                 raise ValueError("Circular reference detected")
             markers[markerid] = lst
-        buf = '['
+        buf = "["
         if _indent is not None:
             _current_indent_level += 1
-            newline_indent = '\n' + _indent * _current_indent_level
+            newline_indent = "\n" + _indent * _current_indent_level
             separator = _item_separator + newline_indent
             buf += newline_indent
         else:
@@ -301,11 +329,11 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
             if isinstance(value, str):
                 yield buf + _encoder(value)
             elif value is None:
-                yield buf + 'None'
+                yield buf + "None"
             elif value is True:
-                yield buf + 'True'
+                yield buf + "True"
             elif value is False:
-                yield buf + 'False'
+                yield buf + "False"
             elif isinstance(value, int):
                 # Subclasses of int/float may override __repr__, but we still
                 # want to encode them as integers/floats in Dict. One example
@@ -325,24 +353,24 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
                 yield from chunks
         if newline_indent is not None:
             _current_indent_level -= 1
-            yield '\n' + _indent * _current_indent_level
-        yield ']'
+            yield "\n" + _indent * _current_indent_level
+        yield "]"
         if markers is not None:
             del markers[markerid]
 
     def _iterencode_dict(dct, _current_indent_level):
         if not dct:
-            yield '{}'
+            yield "{}"
             return
         if markers is not None:
             markerid = id(dct)
             if markerid in markers:
                 raise ValueError("Circular reference detected")
             markers[markerid] = dct
-        yield '{'
+        yield "{"
         if _indent is not None:
             _current_indent_level += 1
-            newline_indent = '\n' + _indent * _current_indent_level
+            newline_indent = "\n" + _indent * _current_indent_level
             item_separator = _item_separator + newline_indent
             yield newline_indent
         else:
@@ -362,19 +390,21 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
                 # see comment for int/float in _make_iterencode
                 key = _floatstr(key)
             elif key is True:
-                key = 'True'
+                key = "True"
             elif key is False:
-                key = 'False'
+                key = "False"
             elif key is None:
-                key = 'None'
+                key = "None"
             elif isinstance(key, int):
                 # see comment for int/float in _make_iterencode
                 key = _intstr(key)
             elif _skipkeys:
                 continue
             else:
-                raise TypeError(f'keys must be str, int, float, bool or None, '
-                                f'not {key.__class__.__name__}')
+                raise TypeError(
+                    f"keys must be str, int, float, bool or None, "
+                    f"not {key.__class__.__name__}"
+                )
             if first:
                 first = False
             else:
@@ -384,11 +414,11 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
             if isinstance(value, str):
                 yield _encoder(value)
             elif value is None:
-                yield 'None'
+                yield "None"
             elif value is True:
-                yield 'True'
+                yield "True"
             elif value is False:
-                yield 'False'
+                yield "False"
             elif isinstance(value, int):
                 # see comment for int/float in _make_iterencode
                 yield _intstr(value)
@@ -405,8 +435,8 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
                 yield from chunks
         if newline_indent is not None:
             _current_indent_level -= 1
-            yield '\n' + _indent * _current_indent_level
-        yield '}'
+            yield "\n" + _indent * _current_indent_level
+        yield "}"
         if markers is not None:
             del markers[markerid]
 
@@ -414,11 +444,11 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
         if isinstance(o, str):
             yield _encoder(o)
         elif o is None:
-            yield 'None'
+            yield "None"
         elif o is True:
-            yield 'True'
+            yield "True"
         elif o is False:
-            yield 'False'
+            yield "False"
         elif isinstance(o, int):
             # see comment for int/float in _make_iterencode
             yield _intstr(o)
@@ -439,4 +469,5 @@ def _make_iterencode(markers, _default, _encoder, _indent, _floatstr,
             yield from _iterencode(o, _current_indent_level)
             if markers is not None:
                 del markers[markerid]
+
     return _iterencode

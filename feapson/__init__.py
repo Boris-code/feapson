@@ -98,7 +98,7 @@ __all__ = [
     'DictDecoder', 'DictDecodeError', 'DictEncoder',
 ]
 
-__author__ = 'Bob Ippolito <bob@redivi.com>'
+__author__ = 'Boris <boris_liu@foxmail.com>'
 
 from .decoder import DictDecoder, DictDecodeError
 from .encoder import DictEncoder
@@ -178,7 +178,7 @@ def dump(obj, fp, *, skipkeys=False, ensure_ascii=True, check_circular=True,
 
 
 def dumps(obj, *, skipkeys=False, ensure_ascii=True, check_circular=True,
-        allow_nan=True, cls=None, indent=4, separators=None,
+        allow_nan=True, cls=None, indent=None, separators=None,
         default=None, sort_keys=False, **kw):
     """Serialize ``obj`` to a Dict formatted ``str``.
 

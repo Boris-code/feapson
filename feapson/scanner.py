@@ -38,11 +38,11 @@ def py_make_scanner(context):
                 _scan_once, object_hook, object_pairs_hook, memo)
         elif nextchar == '[':
             return parse_array((string, idx + 1), _scan_once)
-        elif nextchar == 'N' and string[idx:idx + 4] == 'None':
+        elif nextchar in ('N', 'n') and string[idx:idx + 4] in ('None', 'null'):
             return None, idx + 4
-        elif nextchar == 'T' and string[idx:idx + 4] == 'True':
+        elif nextchar in ('T', 't') and string[idx:idx + 4] in ('True', 'true'):
             return True, idx + 4
-        elif nextchar == 'F' and string[idx:idx + 5] == 'False':
+        elif nextchar in ('F', 'f') and string[idx:idx + 5] in ('False', 'false'):
             return False, idx + 5
 
         m = match_number(string, idx)

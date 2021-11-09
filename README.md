@@ -7,7 +7,10 @@ Example:
 ```python
 >>> import feapson
 >>> feapson.dumps({"a": True, "b": False, "c": [1, 2, 3]})
-{
+'{"a": True, "b": False, "c": [1, 2, 3]}'
+
+>>> feapson.dumps({"a": True, "b": False, "c": [1, 2, 3]}, indent=4, ensure_ascii=False)
+'''{
     "a": True,
     "b": False,
     "c": [
@@ -15,8 +18,11 @@ Example:
         2,
         3
     ]
-}
+}'''
 
 >>> feapson.loads('{"a": True, "b": False, "c": [1, 2, 3]}')
+{'a': True, 'b': False, 'c': [1, 2, 3]}
+
+>>> feapson.loads('{"a": true, "b": false, "c": [1, 2, 3]}')
 {'a': True, 'b': False, 'c': [1, 2, 3]}
 ```
