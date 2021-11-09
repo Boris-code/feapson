@@ -1,0 +1,13 @@
+.DS_Store
+.idea/*
+*/.idea/*
+venv/*
+*.pyc
+*test.py
+*.log
+build/
+dist/
+*.egg-info/
+.vscode/
+media/
+.MWebMetaData/
